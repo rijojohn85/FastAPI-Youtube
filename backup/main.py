@@ -50,9 +50,5 @@ async def get_headers(
         user_agent: Optional[str] = Header(None),
         host: Optional[str] = Header(None),
 )->dict[str, Any]:
-    request_headers = {}
-    request_headers['Accept'] = accept
-    request_headers['Content-Type'] = content_type
-    request_headers['User-Agent'] = user_agent
-    request_headers['Host'] = host
+    request_headers = {'Accept': accept, 'Content-Type': content_type, 'User-Agent': user_agent, 'Host': host}
     return request_headers
