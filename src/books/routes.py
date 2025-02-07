@@ -8,12 +8,12 @@ from src.books.models import Book, CreateBookPayload, UpdateBookPayload
 
 books_router = APIRouter()
 
-@books_router.get("", response_model=List[Book], status_code=status.HTTP_200_OK)
+@books_router.get("/", response_model=List[Book], status_code=status.HTTP_200_OK)
 async def get_all_books():
     return books
 
 
-@books_router.post("", response_model=Book, status_code=status.HTTP_201_CREATED)
+@books_router.post("/", response_model=Book, status_code=status.HTTP_201_CREATED)
 async def create_book(book_payload: CreateBookPayload):
     new_book = Book(id=len(books) + 1, **book_payload.model_dump())
     books.append(new_book)
