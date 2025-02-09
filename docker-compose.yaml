@@ -1,0 +1,25 @@
+networks:
+  dev_network:
+    driver: bridge
+services:
+  dev-db:
+    image: postgres:16.1-alpine3.19
+    restart: always
+    ports:
+      #need seperate one for dev and prod
+      - "5433:5432"
+#    env_file:
+#      - ./.env
+    networks:
+      - dev_network
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+      - dev-db-data:/var/lib/postgres/data
+
+volumes:
+  dev-db-data:
+name: FastAPI dev tutorial
