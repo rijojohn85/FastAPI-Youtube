@@ -7,6 +7,8 @@ from src.auth.schemas import CreateUserPayload
 from src.auth.models import User
 from src.auth.service import UserService
 from src.db.main import get_session
+from src.utils import logger
+
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -22,8 +24,9 @@ async def sign_up(
 ):
     try:
         user = await user_service.create_user(payload, session)
-    except HTTPException:
-        raise
+    except HTTPException as err:
+        raise err
     except Exception as e:
+        logger.error(str(e))
         raise e
     return user

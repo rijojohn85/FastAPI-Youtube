@@ -1,5 +1,6 @@
 from typing import List
 from src.books.service import BookService
+from src.utils import logger
 
 from fastapi import HTTPException, APIRouter, Depends
 from starlette import status
@@ -22,9 +23,15 @@ async def get_all_books(session: AsyncSession = Depends(get_session)):
 async def create_book(
     book_payload: CreateBookPayload, session: AsyncSession = Depends(get_session)
 ):
-    new_book = await book_service.create_book(
-        book_payload=book_payload, session=session
-    )
+    try:
+        new_book = await book_service.create_book(
+            book_payload=book_payload, session=session
+        )
+    except HTTPException as err:
+        raise err
+    except Exception as err:
+        logger.error(err)
+        raise err
     return new_book
 
 
@@ -42,6 +49,7 @@ async def get_book_by_id(book_id: str, session: AsyncSession = Depends(get_sessi
                 status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
             )
     except Exception as e:
+        logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )

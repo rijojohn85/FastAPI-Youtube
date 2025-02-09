@@ -66,5 +66,5 @@ class UserService:
             await session.refresh(user)
         except Exception as e:
             await session.rollback()
-            raise Exception(str(e))
+            raise Exception
         return user

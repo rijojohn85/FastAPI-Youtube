@@ -34,9 +34,12 @@ class BookService:
         self, book_payload: CreateBookPayload, session: AsyncSession
     ) -> Book:
         new_book = Book(**book_payload.model_dump())
-        session.add(new_book)
-        await session.commit()
-        await session.refresh(new_book)
+        try:
+            session.add(new_book)
+            await session.commit()
+            await session.refresh(new_book)
+        except Exception as e:
+            raise e
         return new_book
 
     async def update_book(

@@ -7,12 +7,13 @@ from datetime import datetime
 class User(SQLModel, table=True):
     __tablename__ = "users"
     uid: uuid.UUID = Field(
+        exclude=True,
         sa_column=Column(
             pg.UUID,
             nullable=False,
             primary_key=True,
             default=uuid.uuid4,
-        )
+        ),
     )
     username: str = Field(sa_column=Column(String(100), unique=True))
     password_hash: bytes = Field(exclude=True)
