@@ -9,19 +9,28 @@ from src.books.schemas import Book, CreateBookPayload, UpdateBookPayload
 from src.db.main import get_session
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from src.auth.dependencies import AccessTokenBearer
+
 books_router = APIRouter()
 book_service = BookService()
+access_token_bearer = AccessTokenBearer()
 
 
 @books_router.get("/", response_model=List[Book], status_code=status.HTTP_200_OK)
-async def get_all_books(session: AsyncSession = Depends(get_session)):
+async def get_all_books(
+    session: AsyncSession = Depends(get_session),
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
+):
+    logger.debug(token_details)
     books = await book_service.get_all_books(session)
     return books
 
 
 @books_router.post("/", response_model=Book, status_code=status.HTTP_201_CREATED)
 async def create_book(
-    book_payload: CreateBookPayload, session: AsyncSession = Depends(get_session)
+    book_payload: CreateBookPayload,
+    session: AsyncSession = Depends(get_session),
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
 ):
     try:
         new_book = await book_service.create_book(
@@ -36,7 +45,11 @@ async def create_book(
 
 
 @books_router.get("/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
-async def get_book_by_id(book_id: str, session: AsyncSession = Depends(get_session)):
+async def get_book_by_id(
+    book_id: str,
+    session: AsyncSession = Depends(get_session),
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
+):
     if len(book_id) != 36:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid book ID"
@@ -63,6 +76,7 @@ async def update_book_by_id(
     book_id: str,
     book_payload: UpdateBookPayload,
     session: AsyncSession = Depends(get_session),
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
 ):
     updated_book = await book_service.update_book(
         book_id=book_id, book_payload=book_payload, session=session
@@ -76,6 +90,7 @@ async def update_book_by_id(
 async def delete_book_by_id(
     book_id: str,
     session: AsyncSession = Depends(get_session),
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
 ):
     delete_status = await book_service.delete_book(book_id=book_id, session=session)
     if not delete_status["success"]:

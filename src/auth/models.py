@@ -7,7 +7,6 @@ from datetime import datetime
 class User(SQLModel, table=True):
     __tablename__ = "users"
     uid: uuid.UUID = Field(
-        exclude=True,
         sa_column=Column(
             pg.UUID,
             nullable=False,
@@ -16,7 +15,9 @@ class User(SQLModel, table=True):
         ),
     )
     username: str = Field(sa_column=Column(String(100), unique=True))
-    password_hash: bytes = Field(exclude=True)
+    password_hash: bytes = Field(
+        exclude=True
+    )  # exclude while returning the data to user
     email: str = Field(sa_column=Column(String(120), unique=True))
     first_name: str = Field(sa_column=Column(String(120), nullable=True))
     last_name: str = Field(sa_column=Column(String(120), nullable=True))

@@ -1,3 +1,6 @@
+from datetime import timedelta
+from src.utils import logger
+
 from fastapi import HTTPException, status
 import bcrypt
 
@@ -5,7 +8,9 @@ from .models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 
-from .schemas import CreateUserPayload
+from .schemas import CreateUserPayload, UserLoginPayload
+from .utils import verfiy_password_hash, create_access_token
+from fastapi.responses import JSONResponse
 
 
 class UserService:
@@ -68,3 +73,41 @@ class UserService:
             await session.rollback()
             raise Exception
         return user
+
+    async def login_user(
+        self, payload: UserLoginPayload, session: AsyncSession
+    ) -> JSONResponse:
+
+        user = await self.get_user_by_username(payload.username, session)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            )
+        verified = verfiy_password_hash(
+            password_hash=user.password_hash, password=payload.password
+        )
+        if not verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            )
+        userdata = {
+            "uid": str(user.uid),
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+        }
+        access_token = create_access_token(
+            data=userdata, expires_delta=timedelta(minutes=2)
+        )
+        refresh_token = create_access_token(
+            data=userdata, expires_delta=timedelta(days=2), refresh=True
+        )
+        return JSONResponse(
+            {
+                "message": "login successful",
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user_data": userdata,
+            }
+        )
