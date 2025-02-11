@@ -1,21 +1,27 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, timedelta
 
 from starlette.responses import JSONResponse
 
-from src.auth.schemas import CreateUserPayload
-from src.auth.models import User
+from src.auth.schemas import CreateUserPayload, UserSchema
+from ..db.models import User
 from src.auth.service import UserService
 from src.db.main import get_session
 from src.utils import logger
 from src.auth.schemas import UserLoginPayload
-from .dependencies import RefreshTokenBearer, AccessTokenBearer
+from .dependencies import (
+    RefreshTokenBearer,
+    AccessTokenBearer,
+    get_current_user,  # type: ignore
+    RoleChecker,
+)
 from .utils import create_access_token
 from ..db.redis import add_jti_to_blocklist
 
 auth_router = APIRouter()
 user_service = UserService()
+role_checker = RoleChecker(allowed_roles=["admin", "user"])
 
 
 @auth_router.post(
@@ -59,13 +65,20 @@ async def refresh_token(
     expiry_timestamp = token_details["exp"]
     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
         new_access_token = create_access_token(
-            data=token_details["user"], expires_delta=timedelta(minutes=2)
+            data=token_details["user"], expires_delta=timedelta(minutes=60)
         )
         return JSONResponse({"access_token": new_access_token})
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Invalid or expired token, login again.",
     )
+
+
+@auth_router.get("/me", response_model=UserSchema)
+async def get_current_user(
+    user=Depends(get_current_user), _: bool = Depends(role_checker)
+):
+    return user
 
 
 @auth_router.get("/logout")

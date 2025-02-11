@@ -2,21 +2,12 @@ networks:
   dev_network:
     driver: bridge
 services:
-  redis:
-    image: redis:alpine
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    container_name: redis
-    command: redis-server --save 60 1 --loglevel warning
   dev-db:
     image: postgres:16.1-alpine3.19
     restart: always
     ports:
       #need seperate one for dev and prod
       - "5433:5432"
-    #    env_file:
-    #      - ./.env
     networks:
       - dev_network
     environment:
@@ -26,6 +17,13 @@ services:
     volumes:
       - ./scripts:/docker-entrypoint-initdb.d
       - dev-db-data:/var/lib/postgres/data
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    container_name: redis
+    command: redis-server --save 60 1 --loglevel warning
 
 volumes:
   dev-db-data:

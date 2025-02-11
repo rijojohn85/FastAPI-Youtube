@@ -1,10 +1,9 @@
-from sqlmodel import create_engine, text
+from sqlmodel import create_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
 from src.config import Config
 from sqlalchemy.orm import sessionmaker
-from src.books.models import Book
 
 engine = AsyncEngine(create_engine(url=Config.DEV_DATABASE_URL, echo=False))
 

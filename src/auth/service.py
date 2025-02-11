@@ -1,10 +1,9 @@
 from datetime import timedelta
-from src.utils import logger
 
 from fastapi import HTTPException, status
 import bcrypt
 
-from .models import User
+from ..db.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 
@@ -14,8 +13,9 @@ from fastapi.responses import JSONResponse
 
 
 class UserService:
-
-    async def get_user_by_username(self, username: str, session: AsyncSession) -> User:
+    async def get_user_by_username(
+        self, username: str, session: AsyncSession
+    ) -> User | None:
         statement = select(User).where(User.username == username)
         try:
             result = await session.exec(statement)
@@ -24,7 +24,7 @@ class UserService:
             raise Exception(str(e))
         return user
 
-    async def get_user_by_email(self, email: str, session: AsyncSession) -> User:
+    async def get_user_by_email(self, email: str, session: AsyncSession) -> User | None:
         statement = select(User).where(User.email == email)
         try:
             result = await session.exec(statement)
@@ -55,11 +55,12 @@ class UserService:
                     status_code=status.HTTP_409_CONFLICT,
                     detail="User with this email already exists",
                 )
-        user = User(
+        user = User(  # type: ignore[reportCallIssue]
             username=payload.username,
             email=payload.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
+            role="user",
         )
         user.password_hash = bcrypt.hashpw(
             payload.password.encode("utf-8"), bcrypt.gensalt()
@@ -71,13 +72,12 @@ class UserService:
             await session.refresh(user)
         except Exception as e:
             await session.rollback()
-            raise Exception
+            raise e
         return user
 
     async def login_user(
         self, payload: UserLoginPayload, session: AsyncSession
     ) -> JSONResponse:
-
         user = await self.get_user_by_username(payload.username, session)
         if not user:
             raise HTTPException(
@@ -96,12 +96,13 @@ class UserService:
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
+            "role": user.role,
         }
         access_token = create_access_token(
-            data=userdata, expires_delta=timedelta(minutes=2)
+            data=userdata, expires_delta=timedelta(minutes=60)
         )
         refresh_token = create_access_token(
-            data=userdata, expires_delta=timedelta(days=2), refresh=True
+            data=userdata, expires_delta=timedelta(days=30), refresh=True
         )
         return JSONResponse(
             {

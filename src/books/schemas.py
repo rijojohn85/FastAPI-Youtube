@@ -1,3 +1,4 @@
+from typing import Optional
 import uuid
 from datetime import datetime, date
 
@@ -20,3 +21,4 @@ class Book(CreateBookPayload):
     uid: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    user_uid: Optional[uuid.UUID]

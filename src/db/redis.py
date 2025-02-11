@@ -1,4 +1,5 @@
 import redis
+from redis.typing import ResponseT
 from src.config import Config
 
 JTI_EXPIRY = 3600
@@ -13,5 +14,5 @@ def add_jti_to_blocklist(jti: str) -> None:
 
 
 def token_in_blocklist(jti: str) -> bool:
-    jti = token_blocklist.get(jti)
-    return jti is not None
+    jti_got: ResponseT = token_blocklist.get(jti)
+    return jti_got is not None

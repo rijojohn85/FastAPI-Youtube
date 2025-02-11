@@ -1,40 +1,53 @@
-from typing import List
+from typing import Dict, List, Any
 from src.books.service import BookService
 from src.utils import logger
+import uuid
 
 from fastapi import HTTPException, APIRouter, Depends
 from starlette import status
 
 from src.books.schemas import Book, CreateBookPayload, UpdateBookPayload
 from src.db.main import get_session
-from sqlalchemy.ext.asyncio.session import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth.dependencies import AccessTokenBearer
+from src.auth.dependencies import AccessTokenBearer, RoleChecker
 
 books_router = APIRouter()
 book_service = BookService()
 access_token_bearer = AccessTokenBearer()
+role_checker = Depends(RoleChecker(allowed_roles=["user", "admin"]))
 
 
-@books_router.get("/", response_model=List[Book], status_code=status.HTTP_200_OK)
+@books_router.get(
+    "/",
+    response_model=List[Book],
+    status_code=status.HTTP_200_OK,
+    dependencies=[role_checker],
+)
 async def get_all_books(
     session: AsyncSession = Depends(get_session),
     token_details: AccessTokenBearer = Depends(access_token_bearer),
 ):
-    logger.debug(token_details)
     books = await book_service.get_all_books(session)
     return books
 
 
-@books_router.post("/", response_model=Book, status_code=status.HTTP_201_CREATED)
+@books_router.post(
+    "/",
+    response_model=Book,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[role_checker],  # type: ignore
+)
 async def create_book(
     book_payload: CreateBookPayload,
     session: AsyncSession = Depends(get_session),
-    token_details: AccessTokenBearer = Depends(access_token_bearer),
+    token_details: Dict[str, Any] = Depends(access_token_bearer),
 ):
     try:
         new_book = await book_service.create_book(
-            book_payload=book_payload, session=session
+            book_payload=book_payload,
+            session=session,
+            user_uid=token_details["user"]["user_uid"],  # type: ignore
         )
     except HTTPException as err:
         raise err
@@ -44,7 +57,33 @@ async def create_book(
     return new_book
 
 
-@books_router.get("/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
+@books_router.get(
+    "/users/{user_uid}",
+    response_model=List[Book],
+    status_code=status.HTTP_200_OK,
+    dependencies=[role_checker],  # type: ignore
+)
+async def get_book_by_uid(
+    user_uid: uuid.UUID,
+    token_details: AccessTokenBearer = Depends(access_token_bearer),
+    session: AsyncSession = Depends(get_session),
+):
+    try:
+        books = await book_service.get_book_by_uid(user_uid=user_uid, session=session)
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+    return books
+
+
+@books_router.get(
+    "/{book_id}",
+    response_model=Book,
+    status_code=status.HTTP_200_OK,
+    dependencies=[role_checker],  # type: ignore
+)
 async def get_book_by_id(
     book_id: str,
     session: AsyncSession = Depends(get_session),
@@ -66,11 +105,14 @@ async def get_book_by_id(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
-    return book
+    return book  # type: ignore
 
 
 @books_router.patch(
-    "/{book_id}", response_model=Book, status_code=status.HTTP_202_ACCEPTED
+    "/{book_id}",
+    response_model=Book,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[role_checker],  # type: ignore
 )
 async def update_book_by_id(
     book_id: str,
@@ -86,7 +128,11 @@ async def update_book_by_id(
     return updated_book
 
 
-@books_router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
+@books_router.delete(
+    "/{book_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[role_checker],  # type: ignore
+)
 async def delete_book_by_id(
     book_id: str,
     session: AsyncSession = Depends(get_session),

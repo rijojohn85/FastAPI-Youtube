@@ -1,21 +1,21 @@
+import uuid
 from fastapi import HTTPException, status
-from typing import Dict
+from typing import Dict, List
 from sqlalchemy import Sequence
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from datetime import datetime
 
 
-from src.books.models import Book
+from src.db.models import Book
 from src.books.schemas import CreateBookPayload, UpdateBookPayload
 
 
 class BookService:
-
     async def get_all_books(self, session: AsyncSession) -> Sequence[Book]:
         statement = select(Book).order_by(desc(Book.created_at))
         result = await session.exec(statement)
-        return result.all()
+        return result.all()  # type: ignore
 
     async def get_book_by_id(self, book_id: str, session: AsyncSession) -> Book:
         statement = select(Book).where(Book.uid == book_id)
@@ -30,10 +30,43 @@ class BookService:
             )
         return book
 
+    async def get_book_by_uid(
+        self, session: AsyncSession, user_uid: uuid.UUID
+    ) -> List[Book]:
+        """Get Book By User
+
+        Args:
+            session: DB session injected through dependency
+            user_uid: User id to search for
+        Returns:
+            List of books created by user_uid
+        """
+        statement = select(Book).where(Book.user_uid == user_uid)
+        try:
+            result = await session.exec(statement=statement)
+        except Exception as e:
+            raise e
+        books = result.all()
+        return books  # type: ignore
+
     async def create_book(
-        self, book_payload: CreateBookPayload, session: AsyncSession
+        self,
+        book_payload: CreateBookPayload,
+        session: AsyncSession,
+        user_uid: uuid.UUID,
     ) -> Book:
+        """Create a book object and store it in the DB
+
+        Args:
+            book_payload: book create payload
+            session: DB session
+            user_uid: user_uid for user creating book
+
+        Returns:
+            Book: newly created and stored book object.
+        """
         new_book = Book(**book_payload.model_dump())
+        new_book.user_uid = user_uid
         try:
             session.add(new_book)
             await session.commit()

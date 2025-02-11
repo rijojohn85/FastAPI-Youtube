@@ -3,7 +3,6 @@ import uuid
 
 import bcrypt
 import jwt
-from jwt import InvalidTokenError
 from src.utils import logger
 
 from src.config import Config
@@ -12,25 +11,28 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def create_access_token(
-    data: dict, expires_delta: timedelta = None, refresh: bool = False
+    data: dict, expires_delta: timedelta = timedelta(seconds=0), refresh: bool = False
 ) -> str:
-    print(expires_delta)
+    expiry_datetime = (
+        (datetime.now() + expires_delta)
+        if expires_delta is not None
+        else datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    expiry = expiry_datetime.timestamp()
     payload = {
         "user": data,
-        "exp": (
-            (datetime.now() + expires_delta)
-            if expires_delta is not None
-            else datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        ),
+        "exp": expiry,
         "jti": str(uuid.uuid4()),
         "refresh": refresh,
     }
 
+    logger.error(payload["exp"])
     token = jwt.encode(
         payload=payload,
         key=Config.JWT_SECRET_KEY,
         algorithm=Config.JWT_ALGORITHM,
     )
+    logger.error(decode_token(token))
     return token
 
 

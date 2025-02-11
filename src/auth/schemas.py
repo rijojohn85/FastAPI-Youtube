@@ -1,6 +1,10 @@
-from typing import Optional
+from datetime import datetime
+from typing import Optional, List
+import uuid
 
 from pydantic import BaseModel, Field
+
+from src.db.models import Book
 
 
 class CreateUserPayload(BaseModel):
@@ -14,3 +18,15 @@ class CreateUserPayload(BaseModel):
 class UserLoginPayload(BaseModel):
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=6)
+
+
+class UserSchema(BaseModel):
+    uid: uuid.UUID
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    is_verified: bool
+    updated_at: datetime
+    created_at: datetime
+    books: List[Book]
