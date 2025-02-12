@@ -47,7 +47,7 @@ async def create_book(
         new_book = await book_service.create_book(
             book_payload=book_payload,
             session=session,
-            user_uid=token_details["user"]["user_uid"],  # type: ignore
+            user_uid=token_details["user"]["uid"],  # type: ignore
         )
     except HTTPException as err:
         raise err

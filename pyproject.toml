@@ -2,27 +2,28 @@
 name = "fastapi-youtube"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "rijojohn85",email = "rijojohn85@gmail.com"}
-]
+authors = [{ name = "rijojohn85", email = "rijojohn85@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
-    "fastapi (>=0.115.8,<0.116.0)",
-    "uvicorn (>=0.34.0,<0.35.0)",
-    "fastapi-cli (>=0.0.7,<0.0.8)",
-    "asyncpg (>=0.30.0,<0.31.0)",
-    "pydantic-settings (>=2.7.1,<3.0.0)",
-    "sqlmodel (>=0.0.22,<0.0.23)",
-    "black (>=25.1.0,<26.0.0)",
-    "greenlet (>=3.1.1,<4.0.0)",
-    "alembic (>=1.14.1,<2.0.0)",
-    "bcrypt (>=4.2.1,<5.0.0)",
-    "pyjwt (>=2.10.1,<3.0.0)",
-    "redis (>=5.2.1,<6.0.0)",
+  "fastapi (>=0.115.8,<0.116.0)",
+  "uvicorn (>=0.34.0,<0.35.0)",
+  "fastapi-cli (>=0.0.7,<0.0.8)",
+  "asyncpg (>=0.30.0,<0.31.0)",
+  "pydantic-settings (>=2.7.1,<3.0.0)",
+  "sqlmodel (>=0.0.22,<0.0.23)",
+  "black (>=25.1.0,<26.0.0)",
+  "greenlet (>=3.1.1,<4.0.0)",
+  "alembic (>=1.14.1,<2.0.0)",
+  "bcrypt (>=4.2.1,<5.0.0)",
+  "pyjwt (>=2.10.1,<3.0.0)",
+  "redis (>=5.2.1,<6.0.0)",
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false

@@ -43,6 +43,9 @@ class User(SQLModel, table=True):
     books: List["Book"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
+    reviews: List["Reviews"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -77,14 +80,17 @@ class Book(SQLModel, table=True):
             default=datetime.now,
         )
     )
-    user: Optional["User"] = Relationship(back_populates="books")
+    user: Optional[User] = Relationship(back_populates="books")
+    reviews: List["Reviews"] = Relationship(
+        back_populates="book", sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
     def __repr__(self):
         return f"<Book {self.title}>"
 
 
 class Reviews(SQLModel, table=True):
-    __tablename__ = "reviews"
+    __tablename__ = "reviews"  # type: ignore
 
     uid: uuid.UUID = Field(
         sa_column=Column(
@@ -110,6 +116,8 @@ class Reviews(SQLModel, table=True):
             default=datetime.now,
         )
     )
+    user: Optional[User] = Relationship(back_populates="reviews")
+    book: Optional[Book] = Relationship(back_populates="reviews")
 
     def __repr__(self):
         return f"<Review for {self.book_uid} by {self.user_uid}> >"

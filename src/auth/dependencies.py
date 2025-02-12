@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any, List
+from src.errors import InvlaidToken
 
 from fastapi.security import HTTPBearer
 from fastapi import Request, status, HTTPException, Depends
@@ -47,10 +48,11 @@ class TokenBearer(HTTPBearer):
             logger.error(e)
             raise e
         if not user_data:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token is invalid or expired",
-            )
+            raise InvlaidToken()
+            # raise HTTPException(
+            #     status_code=status.HTTP_401_UNAUTHORIZED,
+            #     detail="Token is invalid or expired",
+            # )
         if token_in_blocklist(user_data["jti"]):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

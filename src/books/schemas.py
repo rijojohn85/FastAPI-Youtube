@@ -1,8 +1,10 @@
-from typing import Optional
+from typing import Optional, List
 import uuid
 from datetime import datetime, date
 
 from pydantic import BaseModel
+
+from src.db.models import Reviews
 
 
 class UpdateBookPayload(BaseModel):
@@ -22,3 +24,4 @@ class Book(CreateBookPayload):
     created_at: datetime
     updated_at: datetime
     user_uid: Optional[uuid.UUID]
+    reviews: List[Reviews]
